@@ -52,6 +52,7 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.robertlangat.bibledaily.BuildConfig
+import com.robertlangat.bibledaily.ads.AdsController
 import com.robertlangat.bibledaily.data.AppSettings
 import com.robertlangat.bibledaily.data.ThemeMode
 import com.robertlangat.bibledaily.data.Translation
@@ -83,6 +84,7 @@ fun SettingsScreen(
 
     fun enableReminder() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !ReminderScheduler.canPostNotifications(context)) {
+            AdsController.suppressNextAppOpenAd()
             permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         } else {
             onReminder(true, settings.reminderHour, settings.reminderMinute)
@@ -200,7 +202,8 @@ fun SettingsScreen(
                 if (ReminderScheduler.canPostNotifications(context)) {
                     onTestReminder()
                 } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    AdsController.suppressNextAppOpenAd()
+            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                 }
             }) { Text("Send a test reminder now") }
 
@@ -216,8 +219,9 @@ fun SettingsScreen(
             HorizontalDivider()
             SectionTitle("About Bible Daily")
             Text(
-                "Version ${BuildConfig.VERSION_NAME}. Works fully offline: no account, no internet permission. " +
-                    "Bookmarks, highlights, notes and settings are stored only on this phone.",
+                "Version ${BuildConfig.VERSION_NAME}. Reading, search and saved items work fully offline with no account. " +
+                    "Bookmarks, highlights, notes and settings are stored only on this phone. " +
+                    "The internet is used only to show ads (Google AdMob test ads in this build).",
                 style = MaterialTheme.typography.bodyMedium,
             )
             Spacer(Modifier.height(24.dp))

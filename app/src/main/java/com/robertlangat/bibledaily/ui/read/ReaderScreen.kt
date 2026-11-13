@@ -72,6 +72,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.robertlangat.bibledaily.ads.AdsController
 import com.robertlangat.bibledaily.data.AppSettings
 import com.robertlangat.bibledaily.data.Books
 import com.robertlangat.bibledaily.data.Translation
@@ -178,7 +179,10 @@ fun ReaderScreen(
                     val prevLabel = prev?.let { "${translation.bookName(Books.byNumber(it.first))} ${it.second}" }
                     val nextLabel = next?.let { "${translation.bookName(Books.byNumber(it.first))} ${it.second}" }
                     TextButton(
-                        onClick = { vm.previous() },
+                        onClick = {
+                            vm.previous()
+                            AdsController.onChapterChanged(context)
+                        },
                         enabled = prev != null,
                         modifier = Modifier
                             .semantics { contentDescription = "Previous chapter" + (prevLabel?.let { ", $it" } ?: "") }
@@ -188,7 +192,10 @@ fun ReaderScreen(
                         Text(prevLabel ?: "")
                     }
                     TextButton(
-                        onClick = { vm.next() },
+                        onClick = {
+                            vm.next()
+                            AdsController.onChapterChanged(context)
+                        },
                         enabled = next != null,
                         modifier = Modifier
                             .semantics { contentDescription = "Next chapter" + (nextLabel?.let { ", $it" } ?: "") }

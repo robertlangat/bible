@@ -22,7 +22,7 @@ enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
 data class AppSettings(
     val textSizeSp: Float = DEFAULT_TEXT_SIZE,
-    val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    val themeMode: ThemeMode = ThemeMode.LIGHT,
     val translationId: String = Translations.default.id,
     val reminderEnabled: Boolean = false,
     val reminderHour: Int = 7,
@@ -58,7 +58,7 @@ class SettingsRepository(private val context: Context) {
     val settings: Flow<AppSettings> = prefs.map { p ->
         AppSettings(
             textSizeSp = p[Keys.textSize] ?: AppSettings.DEFAULT_TEXT_SIZE,
-            themeMode = p[Keys.theme]?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() } ?: ThemeMode.SYSTEM,
+            themeMode = p[Keys.theme]?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() } ?: ThemeMode.LIGHT,
             translationId = p[Keys.translation] ?: Translations.default.id,
             reminderEnabled = p[Keys.reminderEnabled] ?: false,
             reminderHour = p[Keys.reminderHour] ?: 7,

@@ -110,6 +110,7 @@ jobs:
           sha256sum BibleDaily-v0.1.0-test.apk | tee BibleDaily-v0.1.0-test.apk.sha256
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" BibleDaily-v0.1.0-test.apk BibleDaily-v0.1.0-test.apk.sha256 --clobber
+            gh release edit "$TAG" --notes-file .github/release-notes.md --prerelease
             git push -f origin "HEAD:refs/tags/$TAG"
           else
             gh release create "$TAG" BibleDaily-v0.1.0-test.apk BibleDaily-v0.1.0-test.apk.sha256 \

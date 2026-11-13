@@ -4,6 +4,7 @@ import android.content.Context
 import android.text.format.DateFormat
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -32,6 +33,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.robertlangat.bibledaily.AppContainer
+import com.robertlangat.bibledaily.ads.BannerAd
 import com.robertlangat.bibledaily.data.Translations
 import com.robertlangat.bibledaily.ui.home.HomeScreen
 import com.robertlangat.bibledaily.ui.read.ReaderScreen
@@ -99,6 +101,8 @@ fun BibleDailyRoot(container: AppContainer) {
         Scaffold(
             contentWindowInsets = WindowInsets(0),
             bottomBar = {
+                Column {
+                BannerAd()
                 NavigationBar {
                     MainTab.entries.forEach { t ->
                         NavigationBarItem(
@@ -109,6 +113,7 @@ fun BibleDailyRoot(container: AppContainer) {
                             modifier = Modifier.testTag(t.tag),
                         )
                     }
+                }
                 }
             },
         ) { padding ->

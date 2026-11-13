@@ -55,6 +55,7 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.robertlangat.bibledaily.ads.AdsController
 import com.robertlangat.bibledaily.data.db.VerseMark
 import com.robertlangat.bibledaily.data.db.hasNote
 import com.robertlangat.bibledaily.ui.theme.HighlightColors
@@ -66,6 +67,7 @@ fun shareVerse(context: Context, text: String, reference: String) {
         putExtra(Intent.EXTRA_TEXT, text)
         putExtra(Intent.EXTRA_SUBJECT, reference)
     }
+    AdsController.suppressNextAppOpenAd()
     context.startActivity(Intent.createChooser(send, "Share $reference"))
 }
 

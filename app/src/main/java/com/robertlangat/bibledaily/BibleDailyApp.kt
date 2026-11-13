@@ -3,6 +3,7 @@ package com.robertlangat.bibledaily
 import android.app.Application
 import android.content.Context
 import android.util.Log
+import com.robertlangat.bibledaily.ads.AdsController
 import com.robertlangat.bibledaily.data.BibleRepository
 import com.robertlangat.bibledaily.data.SettingsRepository
 import com.robertlangat.bibledaily.data.Translations
@@ -58,6 +59,7 @@ class BibleDailyApp : Application() {
         container = AppContainer(this)
         ReminderScheduler.createChannel(this)
         container.startImport()
+        AdsController.init(this)
     }
 }
 

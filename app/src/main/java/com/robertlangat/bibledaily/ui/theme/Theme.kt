@@ -12,21 +12,34 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import com.robertlangat.bibledaily.data.ThemeMode
 
+// White surfaces with black text and black accents.
 private val LightColors = lightColorScheme(
-    primary = Color(0xFF1E4E79),
+    primary = Color.Black,
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFD3E4F7),
-    onPrimaryContainer = Color(0xFF0B2740),
-    secondary = Color(0xFF7A5300),
+    primaryContainer = Color.White,
+    onPrimaryContainer = Color.Black,
+    secondary = Color(0xFF1F1F1F),
     onSecondary = Color.White,
-    secondaryContainer = Color(0xFFFFDDB0),
-    onSecondaryContainer = Color(0xFF2C1700),
-    background = Color(0xFFFCFBF8),
-    onBackground = Color(0xFF1B1C1E),
-    surface = Color(0xFFFCFBF8),
-    onSurface = Color(0xFF1B1C1E),
-    surfaceVariant = Color(0xFFE3E2DE),
-    onSurfaceVariant = Color(0xFF46474A),
+    secondaryContainer = Color(0xFFEDEDED),
+    onSecondaryContainer = Color.Black,
+    tertiary = Color(0xFF1F1F1F),
+    onTertiary = Color.White,
+    background = Color.White,
+    onBackground = Color.Black,
+    surface = Color.White,
+    onSurface = Color.Black,
+    surfaceVariant = Color(0xFFF2F2F2),
+    onSurfaceVariant = Color(0xFF333333),
+    surfaceTint = Color.White,
+    surfaceBright = Color.White,
+    surfaceDim = Color(0xFFF2F2F2),
+    surfaceContainerLowest = Color.White,
+    surfaceContainerLow = Color.White,
+    surfaceContainer = Color.White,
+    surfaceContainerHigh = Color(0xFFF7F7F7),
+    surfaceContainerHighest = Color(0xFFF2F2F2),
+    outline = Color(0xFF8A8A8A),
+    outlineVariant = Color(0xFFDDDDDD),
 )
 
 private val DarkColors = darkColorScheme(

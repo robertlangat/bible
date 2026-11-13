@@ -3,7 +3,6 @@ package com.robertlangat.bibledaily
 import android.app.Activity
 import android.app.Instrumentation
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.provider.Settings
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
@@ -48,11 +47,9 @@ class CoreFlowsTest {
 
     @Test
     fun t1_firstLaunchWorksOfflineAndShowsVerseOfDay() {
-        // The device is in airplane mode and the app has no INTERNET permission at all.
+        // The device is in airplane mode: the Bible must load and work without any network.
         val airplane = Settings.Global.getInt(context.contentResolver, Settings.Global.AIRPLANE_MODE_ON, 0)
         assertEquals("Emulator must be in airplane mode for this test", 1, airplane)
-        val permission = context.packageManager.checkPermission(android.Manifest.permission.INTERNET, context.packageName)
-        assertEquals(PackageManager.PERMISSION_DENIED, permission)
 
         rule.waitForBibleReady()
         rule.onNodeWithTag("votd_text").assertIsDisplayed()

@@ -1,12 +1,12 @@
 # Bible Daily
 
-Bible Daily is a native Android Bible app that works fully offline. It is written in Kotlin with Jetpack Compose, Material 3, Room and DataStore.
+Bible Daily is a native Android Bible app. Reading, search and saved items work fully offline. It is written in Kotlin with Jetpack Compose, Material 3, Room and DataStore, and shows Google AdMob ads (test ad units in this build).
 
 **Download the test APK:** [BibleDaily-v0.1.0-test.apk](https://github.com/robertlangat/bible/releases/download/v0.1.0-test/BibleDaily-v0.1.0-test.apk) (from the [v0.1.0-test pre-release](https://github.com/robertlangat/bible/releases/tag/v0.1.0-test))
 
 - **Minimum Android version:** 8.0 (API 26). Target and compile SDK: 35 (Android 15).
 - **Application ID:** `com.robertlangat.bibledaily`
-- **Permissions:** notifications (for the optional daily reminder) and run-at-boot (to re-arm the reminder). The app has **no internet permission**.
+- **Permissions:** notifications (for the optional daily reminder), run-at-boot (to re-arm the reminder), and internet and network state (used **only** to load AdMob ads; the Bible never needs a connection).
 
 ## Features
 
@@ -17,7 +17,7 @@ Bible Daily is a native Android Bible app that works fully offline. It is writte
 | **Search** | Offline search by word (`shepherd`), phrase (`love one another`, or `"born anew"` in quotes for an exact match) or reference (`John 3:16`, `Jn 3:16`, `Psalm 23`, `1 Cor 13:4-7`, `II Kings 2`). Tapping a result opens the chapter and scrolls to the verse. |
 | **Saved** | Your bookmarks, highlights and notes, stored only on the phone, with open and remove actions. |
 
-Settings has the light, dark and system theme, the text size slider, the daily reminder switch and time picker, a "send a test reminder" button, and the Bible edition, source and attribution.
+The default look is white screens with black text and black accents. Settings has the light (default), dark and system theme, the text size slider, the daily reminder switch and time picker, a "send a test reminder" button, and the Bible edition, source and attribution.
 
 Copied or shared verses look like this:
 
@@ -27,6 +27,24 @@ For God so loved the world, that he gave his one and only Son, that whoever beli
 ```
 
 Accessibility: every icon button has a TalkBack label. Each verse is read as one item ("John 3:16. For God so loved… Bookmarked. Has note"), headings are marked as headings, and search result counts are announced.
+
+## Ads (AdMob test units)
+
+| Format | Ad unit ID | When it shows |
+|---|---|---|
+| App open | `ca-app-pub-3940256099942544/9257395921` | When you return to the app from the background. Never on a cold start, and never after you come back from the share sheet or a permission prompt. |
+| Banner | `ca-app-pub-3940256099942544/9214589741` | Adaptive banner above the bottom tabs. It takes no space until an ad loads, so it is invisible offline. |
+| Interstitial | `ca-app-pub-3940256099942544/1033173712` | At most once every 3 previous/next chapter moves, and never within 2 minutes of another full-screen ad. |
+
+The AdMob app ID is Google's sample app ID `ca-app-pub-3940256099942544~3347511713`. All four IDs are set in `app/build.gradle.kts` (`manifestPlaceholders["admobAppId"]` and the `ADMOB_*` `buildConfigField`s). The ad logic is in `app/src/main/java/com/robertlangat/bibledaily/ads/Ads.kt`.
+
+Before publishing with real ads:
+1. Replace the four IDs with your own AdMob app ID and ad unit IDs.
+2. Add consent handling with Google's User Messaging Platform (required for users in the EEA, UK and Switzerland).
+3. Publish an `app-ads.txt` file on your developer website.
+4. Complete the Play Console data safety form (AdMob collects the advertising ID).
+
+Never click your own live ads.
 
 ## Bible text and attribution
 
@@ -70,9 +88,11 @@ The debug build is signed with the committed test key `app/debug.keystore` (pass
 The emulator tests are in `app/src/androidTest`. `scripts/device-tests.sh` runs them like this:
 
 1. Turns on airplane mode and does a fresh install.
-2. Runs `CoreFlowsTest`: offline first launch, chapter navigation, `John 3:16` / `Jn 3:16` / `Psalm 23` / phrase search, the share intent contents, adding a bookmark, highlight and note, and the dark mode setting.
+2. Runs `CoreFlowsTest` (still in airplane mode): offline first launch, chapter navigation, `John 3:16` / `Jn 3:16` / `Psalm 23` / phrase search, the share intent contents, adding a bookmark, highlight and note, and the dark mode setting.
 3. Force-stops the app.
 4. Runs `RestartPersistenceTest` in a new process, which checks that the note, the bookmark and the reading position survived.
+5. Turns airplane mode off and runs `AdsSmokeTest`, which checks that the test banner loads and that the interstitial shows after 3 chapter moves.
+6. Cold-starts the app, presses Home and returns, which checks that the app open ad shows. The ads checks are reported but don't block the release, because ad fill depends on Google's servers.
 
 ```bash
 ./gradlew assembleDebug assembleDebugAndroidTest
