@@ -1,0 +1,2 @@
+--------- beginning of main
+11-13 10:07:35.054  2505  2505 W BibleDailyAds: Consent info update failed: Error making request.
