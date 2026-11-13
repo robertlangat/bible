@@ -37,7 +37,7 @@ Accessibility: every icon button has a TalkBack label. Each verse is read as one
 | Source | eBible.org USFX edition `eng-web` (<https://ebible.org/find/details.php?id=eng-web>), taken from the [seven1m/open-bibles](https://github.com/seven1m/open-bibles) collection (file `eng-web.usfx.xml`) |
 | Attribution | "The World English Bible is in the Public Domain. That means that it is not copyrighted. However, 'World English Bible' is a Trademark of eBible.org." |
 
-The verse text is unchanged. Footnotes, section headings and Psalm titles are left out of the bundled file. The WEB source leaves five verses empty (Luke 17:36, Acts 8:37, Acts 15:34, Acts 24:7 and Romans 16:25), so they are left out here too. The conversion script is [`scripts/usfx2tsv.py`](scripts/usfx2tsv.py). The bundled data is `app/src/main/assets/bibles/eng-web.tsv.gz`, a gzip file with one verse per line: `book_number<TAB>chapter<TAB>verse<TAB>text`.
+The verse text is unchanged. Footnotes, section headings and Psalm titles are left out of the bundled file. The WEB source leaves five verses empty (Luke 17:36, Acts 8:37, Acts 15:34, Acts 24:7 and Romans 16:25), so they are left out here too. The conversion script is [`scripts/usfx2tsv.py`](scripts/usfx2tsv.py). The bundled data is `app/src/main/assets/bibles/eng-web.tsv.gzip`, a gzip file with one verse per line: `book_number<TAB>chapter<TAB>verse<TAB>text`.
 
 The same attribution is shown in the app under **Settings › About this Bible**.
 
@@ -102,7 +102,7 @@ app/src/main/java/com/robertlangat/bibledaily/
   domain/                  reference parser, search normalisation, verse of the day, share text
   reminder/                AlarmManager scheduling, notification and boot receivers
   ui/                      Compose screens: home, read, search, saved, settings, and shared verse actions
-app/src/main/assets/bibles/eng-web.tsv.gz   bundled World English Bible
+app/src/main/assets/bibles/eng-web.tsv.gzip   bundled World English Bible
 scripts/                   data conversion and device test scripts
 ```
 

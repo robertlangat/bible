@@ -1,7 +1,8 @@
 package com.robertlangat.bibledaily.data
 
 /**
- * A bundled Bible edition. Each translation ships as a gzip TSV asset
+ * A bundled Bible edition. Each translation ships as a gzip TSV asset (named `.gzip`, because the
+ * Android asset packager strips a `.gz` suffix)
  * (`book_number \t chapter \t verse \t text`) and is imported into the shared `verses` table,
  * keyed by [id]. To add a Kiswahili edition later, add the asset, a [Translation] entry with
  * `languageCode = "sw"` and localized [bookNames], and register it in [Translations.all].
@@ -33,7 +34,7 @@ object Translations {
         name = "World English Bible",
         languageCode = "en",
         languageName = "English",
-        assetPath = "bibles/eng-web.tsv.gz",
+        assetPath = "bibles/eng-web.tsv.gzip",
         expectedVerses = 31098,
         dataVersion = 1,
         editionNote = "World English Bible (2020 stable text), 66 books (Protestant canon). " +

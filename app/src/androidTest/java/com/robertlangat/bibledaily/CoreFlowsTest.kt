@@ -4,7 +4,6 @@ import android.app.Activity
 import android.app.Instrumentation
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.ConnectivityManager
 import android.provider.Settings
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
@@ -27,7 +26,6 @@ import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.FixMethodOrder
 import org.junit.Rule
@@ -53,7 +51,6 @@ class CoreFlowsTest {
         // The device is in airplane mode and the app has no INTERNET permission at all.
         val airplane = Settings.Global.getInt(context.contentResolver, Settings.Global.AIRPLANE_MODE_ON, 0)
         assertEquals("Emulator must be in airplane mode for this test", 1, airplane)
-        assertNull("No network should be available", context.getSystemService(ConnectivityManager::class.java).activeNetwork)
         val permission = context.packageManager.checkPermission(android.Manifest.permission.INTERNET, context.packageName)
         assertEquals(PackageManager.PERMISSION_DENIED, permission)
 

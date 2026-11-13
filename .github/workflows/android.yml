@@ -30,6 +30,7 @@ jobs:
           ls -la app/build/outputs/apk/debug app/build/outputs/apk/androidTest/debug
           BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
           $BT/aapt2 dump badging app/build/outputs/apk/debug/app-debug.apk | grep -E "package:|sdkVersion|targetSdkVersion|uses-permission|application-label:"
+          unzip -l app/build/outputs/apk/debug/app-debug.apk | grep "assets/bibles/" || { echo "Bible data missing from APK"; exit 1; }
           $BT/apksigner verify --print-certs app/build/outputs/apk/debug/app-debug.apk | head -3
       - uses: actions/upload-artifact@v4
         if: always()
