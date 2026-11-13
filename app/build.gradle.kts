@@ -19,12 +19,13 @@ android {
         versionName = "1.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // AdMob: debug builds (and every automated test) use Google's official TEST app ID and
-        // TEST ad units, so no real ad is ever requested during development or CI.
-        manifestPlaceholders["admobAppId"] = "ca-app-pub-3940256099942544~3347511713"
-        buildConfigField("String", "ADMOB_APP_OPEN_ID", "\"ca-app-pub-3940256099942544/9257395921\"")
-        buildConfigField("String", "ADMOB_BANNER_ID", "\"ca-app-pub-3940256099942544/9214589741\"")
-        buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"ca-app-pub-3940256099942544/1033173712\"")
+        // AdMob: real IDs from the Bible Daily AdMob account (publisher 8306955081407788), used by
+        // every build. No App Open unit exists yet, so app open ads are off (empty ID).
+        // Add your phone as a test device in AdMob > Settings > Test devices, and never tap your own ads.
+        manifestPlaceholders["admobAppId"] = "ca-app-pub-8306955081407788~9890443209"
+        buildConfigField("String", "ADMOB_APP_OPEN_ID", "\"\"")
+        buildConfigField("String", "ADMOB_BANNER_ID", "\"ca-app-pub-8306955081407788/5623895132\"")
+        buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"ca-app-pub-8306955081407788/2304788532\"")
     }
 
     signingConfigs {
@@ -44,12 +45,6 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
         release {
-            // Real AdMob IDs for the store build (Bible Daily, publisher 8306955081407788).
-            // No App Open unit was provided, so app open ads are disabled in release (empty ID).
-            manifestPlaceholders["admobAppId"] = "ca-app-pub-8306955081407788~9890443209"
-            buildConfigField("String", "ADMOB_APP_OPEN_ID", "\"\"")
-            buildConfigField("String", "ADMOB_BANNER_ID", "\"ca-app-pub-8306955081407788/5623895132\"")
-            buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"ca-app-pub-8306955081407788/2304788532\"")
             // Store builds are signed outside the repository with the private upload key
             // (see README "Store release"), so no signingConfig is set here.
             isMinifyEnabled = false

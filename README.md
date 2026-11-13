@@ -2,7 +2,7 @@
 
 Bible Daily is a native Android Bible app. Reading, search and saved items work fully offline. It is written in Kotlin with Jetpack Compose, Material 3, Room and DataStore, and shows Google AdMob ads.
 
-**Download the test APK (test ads):** [BibleDaily-v0.1.0-test.apk](https://github.com/robertlangat/bible/releases/download/v0.1.0-test/BibleDaily-v0.1.0-test.apk) (from the [v0.1.0-test pre-release](https://github.com/robertlangat/bible/releases/tag/v0.1.0-test))
+**Download the test APK:** [BibleDaily-v0.1.0-test.apk](https://github.com/robertlangat/bible/releases/download/v0.1.0-test/BibleDaily-v0.1.0-test.apk) (from the [v0.1.0-test pre-release](https://github.com/robertlangat/bible/releases/tag/v0.1.0-test))
 
 - **Minimum Android version:** 8.0 (API 26). Target and compile SDK: 36 (Android 16), as Google Play requires for new apps since 31 August 2026.
 - **Version:** 1.0.0 (version code 2). Test builds are named `1.0.0-test`.
@@ -31,14 +31,21 @@ Accessibility: every icon button has a TalkBack label. Each verse is read as one
 
 ## Ads (AdMob)
 
-| Format | Store build (`release`) | Test build (`debug`, used by all automated tests) | When it shows |
-|---|---|---|---|
-| App ID | `ca-app-pub-8306955081407788~9890443209` | `ca-app-pub-3940256099942544~3347511713` (Google sample) | |
-| Banner | `ca-app-pub-8306955081407788/5623895132` | `ca-app-pub-3940256099942544/9214589741` | Adaptive banner above the bottom tabs. It takes no space until an ad loads, so it is invisible offline. |
-| Interstitial | `ca-app-pub-8306955081407788/2304788532` | `ca-app-pub-3940256099942544/1033173712` | At most once every 3 previous/next chapter moves, and never within 2 minutes of another full-screen ad. |
-| App open | **off** (no unit provided) | `ca-app-pub-3940256099942544/9257395921` | When returning to the app from the background, never on a cold start or after sharing. To enable it in the store build, put an App Open unit ID in `ADMOB_APP_OPEN_ID` for `release` in `app/build.gradle.kts`. |
+Every build (store and test) uses the real ad units from the Bible Daily AdMob account. No Google test units remain in the project.
 
-The IDs are set per build type in `app/build.gradle.kts`, and the ad logic is in `app/src/main/java/com/robertlangat/bibledaily/ads/Ads.kt`. CI and the device tests only ever run the debug build with Google's test units. The release build is launched only in airplane mode, so automated testing never requests your real ads. **Never tap your own live ads.** To see real ads on your own phone safely, add it as a test device in AdMob › Settings › Test devices.
+| Format | Ad unit | When it shows |
+|---|---|---|
+| App ID | `ca-app-pub-8306955081407788~9890443209` | |
+| Banner | `ca-app-pub-8306955081407788/5623895132` | Adaptive banner above the bottom tabs. It takes no space until an ad loads, so it is invisible offline. |
+| Interstitial | `ca-app-pub-8306955081407788/2304788532` | At most once every 3 previous/next chapter moves, and never within 2 minutes of another full-screen ad. |
+| App open | **off** (no unit yet) | When returning to the app from the background. To turn it on, put an App Open unit ID in `ADMOB_APP_OPEN_ID` in `app/build.gradle.kts`. |
+
+The IDs are in `app/build.gradle.kts`, and the ad logic is in `app/src/main/java/com/robertlangat/bibledaily/ads/Ads.kt`. The ad formats were checked end to end with Google's test units before the switch.
+
+**Protect your AdMob account:**
+- **Test devices:** add every phone you test on in **AdMob › Settings › Test devices**. That device then gets production ads in test mode.
+- **Don't tap your own live ads.**
+- **CI stays offline:** the emulator runs in airplane mode for the whole run, so automated tests never request your ads.
 
 **Consent:** the app uses Google's User Messaging Platform. On start it requests consent information and shows a consent form only where one is required *and* you have created the message in **AdMob › Privacy & messaging** (create a European regulations / GDPR message, and a US state regulations message if you want it). Ads start only once consent allows them. When required, an **Ad privacy choices** button appears in Settings.
 
@@ -119,8 +126,7 @@ The emulator tests are in `app/src/androidTest`. `scripts/device-tests.sh` runs 
 2. Runs `CoreFlowsTest` (still in airplane mode): offline first launch, chapter navigation, `John 3:16` / `Jn 3:16` / `Psalm 23` / phrase search, the share intent contents, adding a bookmark, highlight and note, and the dark mode setting.
 3. Force-stops the app.
 4. Runs `RestartPersistenceTest` in a new process, which checks that the note, the bookmark and the reading position survived.
-5. Turns airplane mode off and runs `AdsSmokeTest`, which checks that the test banner loads and that the interstitial shows after 3 chapter moves.
-6. Cold-starts the app, presses Home and returns, which checks that the app open ad shows. The ads checks are reported but don't block the release, because ad fill depends on Google's servers.
+Airplane mode stays on for the whole run, so automated tests never request the real ad units.
 
 ```bash
 ./gradlew assembleDebug assembleDebugAndroidTest
