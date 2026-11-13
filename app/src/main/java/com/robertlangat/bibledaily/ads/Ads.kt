@@ -38,7 +38,14 @@ import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.appopen.AppOpenAd
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
+import com.google.android.ump.ConsentInformation
+import com.google.android.ump.ConsentRequestParameters
+import com.google.android.ump.UserMessagingPlatform
 import com.robertlangat.bibledaily.BuildConfig
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import androidx.compose.runtime.collectAsState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -79,13 +86,57 @@ object AdsController : Application.ActivityLifecycleCallbacks, DefaultLifecycleO
 
     val interstitialReady: Boolean get() = interstitial != null
     val appOpenReady: Boolean get() = appOpenAd != null
+    private val appOpenEnabled: Boolean get() = BuildConfig.ADMOB_APP_OPEN_ID.isNotBlank()
 
-    fun init(application: Application) {
+    private val _ready = MutableStateFlow(false)
+    /** True once consent allows ads and the SDK has been started. */
+    val ready: StateFlow<Boolean> = _ready.asStateFlow()
+
+    private var consentInfo: ConsentInformation? = null
+
+    /**
+     * Runs Google's User Messaging Platform consent flow (shows the GDPR/US-states form only where
+     * required and configured in AdMob › Privacy & messaging), then starts ads if allowed.
+     * Call from the main activity's onCreate.
+     */
+    fun gatherConsentAndInit(activity: Activity) {
+        val info = UserMessagingPlatform.getConsentInformation(activity)
+        consentInfo = info
+        info.requestConsentInfoUpdate(
+            activity,
+            ConsentRequestParameters.Builder().build(),
+            {
+                UserMessagingPlatform.loadAndShowConsentFormIfRequired(activity) { error ->
+                    if (error != null) Log.w(TAG, "Consent form error: ${error.message}")
+                    if (info.canRequestAds()) init(activity.application)
+                }
+            },
+            { error ->
+                Log.w(TAG, "Consent info update failed: ${error.message}")
+                if (info.canRequestAds()) init(activity.application)
+            },
+        )
+        // Consent from a previous session lets ads start right away.
+        if (info.canRequestAds()) init(activity.application)
+    }
+
+    /** Whether Settings should show the "Ad privacy choices" entry (required in some regions). */
+    fun privacyOptionsRequired(): Boolean =
+        consentInfo?.privacyOptionsRequirementStatus == ConsentInformation.PrivacyOptionsRequirementStatus.REQUIRED
+
+    fun showPrivacyOptions(activity: Activity) {
+        UserMessagingPlatform.showPrivacyOptionsForm(activity) { error ->
+            if (error != null) Log.w(TAG, "Privacy options error: ${error.message}")
+        }
+    }
+
+    private fun init(application: Application) {
         if (initialized) return
         initialized = true
         app = application
         app.registerActivityLifecycleCallbacks(this)
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
+        _ready.value = true
         // The SDK recommends initializing off the main thread.
         CoroutineScope(Dispatchers.IO).launch {
             MobileAds.initialize(app) {
@@ -105,7 +156,7 @@ object AdsController : Application.ActivityLifecycleCallbacks, DefaultLifecycleO
     // ---- App open ---------------------------------------------------------------------------
 
     private fun loadAppOpen() {
-        if (appOpenLoading || appOpenAd != null) return
+        if (!appOpenEnabled || appOpenLoading || appOpenAd != null) return
         appOpenLoading = true
         AppOpenAd.load(
             app,
@@ -142,7 +193,7 @@ object AdsController : Application.ActivityLifecycleCallbacks, DefaultLifecycleO
     }
 
     private fun showAppOpen(activity: Activity) {
-        if (!initialized || showingFullScreen) return
+        if (!initialized || !appOpenEnabled || showingFullScreen) return
         val ad = appOpenAd
         if (ad == null || SystemClock.elapsedRealtime() - appOpenLoadedAt > APP_OPEN_MAX_AGE_MS) {
             appOpenAd = null
@@ -254,9 +305,11 @@ fun Context.findActivity(): Activity? {
     return null
 }
 
-/** Adaptive banner. Collapses to zero height until an ad has loaded (e.g. offline). */
+/** Adaptive banner. Collapses to zero height until an ad has loaded (e.g. offline or before consent). */
 @Composable
 fun BannerAd(modifier: Modifier = Modifier) {
+    val adsReady by AdsController.ready.collectAsState()
+    if (!adsReady) return
     var loaded by remember { mutableStateOf(false) }
     val widthDp = LocalConfiguration.current.screenWidthDp
     val main = remember { Handler(Looper.getMainLooper()) }

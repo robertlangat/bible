@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import com.robertlangat.bibledaily.ads.AdsController
 import com.robertlangat.bibledaily.ui.BibleDailyRoot
 
 class MainActivity : ComponentActivity() {
@@ -11,5 +12,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent { BibleDailyRoot(appContainer) }
+        AdsController.gatherConsentAndInit(this)
     }
 }

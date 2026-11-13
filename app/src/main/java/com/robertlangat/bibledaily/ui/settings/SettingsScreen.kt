@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.robertlangat.bibledaily.BuildConfig
 import com.robertlangat.bibledaily.ads.AdsController
+import com.robertlangat.bibledaily.ads.findActivity
 import com.robertlangat.bibledaily.data.AppSettings
 import com.robertlangat.bibledaily.data.ThemeMode
 import com.robertlangat.bibledaily.data.Translation
@@ -216,12 +217,20 @@ fun SettingsScreen(
             Text(translation.sourceUrl, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
             Text(translation.attribution, style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("attribution"))
 
+            if (AdsController.privacyOptionsRequired()) {
+                HorizontalDivider()
+                SectionTitle("Ads")
+                OutlinedButton(onClick = { context.findActivity()?.let { AdsController.showPrivacyOptions(it) } }) {
+                    Text("Ad privacy choices")
+                }
+            }
+
             HorizontalDivider()
             SectionTitle("About Bible Daily")
             Text(
                 "Version ${BuildConfig.VERSION_NAME}. Reading, search and saved items work fully offline with no account. " +
                     "Bookmarks, highlights, notes and settings are stored only on this phone. " +
-                    "The internet is used only to show ads (Google AdMob test ads in this build).",
+                    "The internet is used only to show ads from Google AdMob.",
                 style = MaterialTheme.typography.bodyMedium,
             )
             Spacer(Modifier.height(24.dp))

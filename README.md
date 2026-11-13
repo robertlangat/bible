@@ -1,10 +1,11 @@
 # Bible Daily
 
-Bible Daily is a native Android Bible app. Reading, search and saved items work fully offline. It is written in Kotlin with Jetpack Compose, Material 3, Room and DataStore, and shows Google AdMob ads (test ad units in this build).
+Bible Daily is a native Android Bible app. Reading, search and saved items work fully offline. It is written in Kotlin with Jetpack Compose, Material 3, Room and DataStore, and shows Google AdMob ads.
 
-**Download the test APK:** [BibleDaily-v0.1.0-test.apk](https://github.com/robertlangat/bible/releases/download/v0.1.0-test/BibleDaily-v0.1.0-test.apk) (from the [v0.1.0-test pre-release](https://github.com/robertlangat/bible/releases/tag/v0.1.0-test))
+**Download the test APK (test ads):** [BibleDaily-v0.1.0-test.apk](https://github.com/robertlangat/bible/releases/download/v0.1.0-test/BibleDaily-v0.1.0-test.apk) (from the [v0.1.0-test pre-release](https://github.com/robertlangat/bible/releases/tag/v0.1.0-test))
 
-- **Minimum Android version:** 8.0 (API 26). Target and compile SDK: 35 (Android 15).
+- **Minimum Android version:** 8.0 (API 26). Target and compile SDK: 36 (Android 16), as Google Play requires for new apps since 31 August 2026.
+- **Version:** 1.0.0 (version code 2). Test builds are named `1.0.0-test`.
 - **Application ID:** `com.robertlangat.bibledaily`
 - **Permissions:** notifications (for the optional daily reminder), run-at-boot (to re-arm the reminder), and internet and network state (used **only** to load AdMob ads; the Bible never needs a connection).
 
@@ -28,23 +29,50 @@ For God so loved the world, that he gave his one and only Son, that whoever beli
 
 Accessibility: every icon button has a TalkBack label. Each verse is read as one item ("John 3:16. For God so loved… Bookmarked. Has note"), headings are marked as headings, and search result counts are announced.
 
-## Ads (AdMob test units)
+## Ads (AdMob)
 
-| Format | Ad unit ID | When it shows |
-|---|---|---|
-| App open | `ca-app-pub-3940256099942544/9257395921` | When you return to the app from the background. Never on a cold start, and never after you come back from the share sheet or a permission prompt. |
-| Banner | `ca-app-pub-3940256099942544/9214589741` | Adaptive banner above the bottom tabs. It takes no space until an ad loads, so it is invisible offline. |
-| Interstitial | `ca-app-pub-3940256099942544/1033173712` | At most once every 3 previous/next chapter moves, and never within 2 minutes of another full-screen ad. |
+| Format | Store build (`release`) | Test build (`debug`, used by all automated tests) | When it shows |
+|---|---|---|---|
+| App ID | `ca-app-pub-8306955081407788~9890443209` | `ca-app-pub-3940256099942544~3347511713` (Google sample) | |
+| Banner | `ca-app-pub-8306955081407788/5623895132` | `ca-app-pub-3940256099942544/9214589741` | Adaptive banner above the bottom tabs. It takes no space until an ad loads, so it is invisible offline. |
+| Interstitial | `ca-app-pub-8306955081407788/2304788532` | `ca-app-pub-3940256099942544/1033173712` | At most once every 3 previous/next chapter moves, and never within 2 minutes of another full-screen ad. |
+| App open | **off** (no unit provided) | `ca-app-pub-3940256099942544/9257395921` | When returning to the app from the background, never on a cold start or after sharing. To enable it in the store build, put an App Open unit ID in `ADMOB_APP_OPEN_ID` for `release` in `app/build.gradle.kts`. |
 
-The AdMob app ID is Google's sample app ID `ca-app-pub-3940256099942544~3347511713`. All four IDs are set in `app/build.gradle.kts` (`manifestPlaceholders["admobAppId"]` and the `ADMOB_*` `buildConfigField`s). The ad logic is in `app/src/main/java/com/robertlangat/bibledaily/ads/Ads.kt`.
+The IDs are set per build type in `app/build.gradle.kts`, and the ad logic is in `app/src/main/java/com/robertlangat/bibledaily/ads/Ads.kt`. CI and the device tests only ever run the debug build with Google's test units. The release build is launched only in airplane mode, so automated testing never requests your real ads. **Never tap your own live ads.** To see real ads on your own phone safely, add it as a test device in AdMob › Settings › Test devices.
 
-Before publishing with real ads:
-1. Replace the four IDs with your own AdMob app ID and ad unit IDs.
-2. Add consent handling with Google's User Messaging Platform (required for users in the EEA, UK and Switzerland).
-3. Publish an `app-ads.txt` file on your developer website.
-4. Complete the Play Console data safety form (AdMob collects the advertising ID).
+**Consent:** the app uses Google's User Messaging Platform. On start it requests consent information and shows a consent form only where one is required *and* you have created the message in **AdMob › Privacy & messaging** (create a European regulations / GDPR message, and a US state regulations message if you want it). Ads start only once consent allows them. When required, an **Ad privacy choices** button appears in Settings.
 
-Never click your own live ads.
+**Before your first release with ads:**
+- Publish an `app-ads.txt` file on the developer website you list in each store.
+- Add the privacy policy URL ([PRIVACY.md](PRIVACY.md), e.g. `https://github.com/robertlangat/bible/blob/main/PRIVACY.md`).
+- In Play Console, declare that the app contains ads and uses the advertising ID, and complete the Data safety form (AdMob collects the advertising ID, device and app info, and ad interactions).
+
+## Store release (Google Play, Amazon Appstore, Huawei AppGallery)
+
+| File | Use it for |
+|---|---|
+| `BibleDaily-1.0.0.aab` (signed Android App Bundle) | **Google Play** (required format), **Amazon Appstore** (accepted for Amazon-signed apps, the default for new apps), **Huawei AppGallery** |
+| `BibleDaily-1.0.0.apk` (signed universal APK) | **Amazon Appstore** or **Huawei AppGallery**, if you prefer an APK there |
+
+Both are signed with your private **upload key** (`bibledaily-upload.p12`, alias `upload`). The key and its password are **not** in this repository and never go to GitHub. Keep a backup of the key file and its password somewhere safe (for example a password manager plus an offline copy). On Google Play, enrol in **Play App Signing** (the default for new apps). Google then holds the app signing key, and if you ever lose the upload key, you can ask Google to reset it. Amazon and Huawei re-sign apps with their own keys by default.
+
+How the files are produced:
+1. CI builds unsigned `bundleRelease` and `assembleRelease` outputs and pushes them to the `release-build` branch.
+2. They are signed outside GitHub. The AAB is signed with `jarsigner` (SHA256withRSA); the APK uses APK Signature Scheme v2 (`scripts/sign_apk_v2.py`, or `apksigner` from the Android SDK).
+3. The signed files are pushed to the `signed-release` branch. The **Verify signed store builds** workflow then:
+   - checks the APK with `apksigner verify` and the AAB with `jarsigner -verify` and `bundletool validate`
+   - installs both on an Android 16 emulator in airplane mode and confirms the app launches without crashing.
+
+To sign a new version yourself with the Android SDK:
+
+```bash
+# bump versionCode/versionName in app/build.gradle.kts first
+./gradlew bundleRelease assembleRelease
+jarsigner -sigalg SHA256withRSA -digestalg SHA-256 -keystore bibledaily-upload.p12 \
+  -signedjar BibleDaily.aab app/build/outputs/bundle/release/app-release.aab upload
+zipalign -p 4 app/build/outputs/apk/release/app-release-unsigned.apk aligned.apk
+apksigner sign --ks bibledaily-upload.p12 --ks-key-alias upload --out BibleDaily.apk aligned.apk
+```
 
 ## Bible text and attribution
 

@@ -24,7 +24,28 @@ jobs:
           java-version: "17"
       - uses: gradle/actions/setup-gradle@v4
       - name: Build debug APK, test APK and run unit tests
-        run: ./gradlew --no-daemon --stacktrace assembleDebug assembleDebugAndroidTest testDebugUnitTest
+        run: ./gradlew --no-daemon --stacktrace assembleDebug assembleDebugAndroidTest testDebugUnitTest bundleRelease assembleRelease
+      - name: Prepare unsigned store builds (zipaligned APK + AAB)
+        run: |
+          BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
+          mkdir -p release-build
+          $BT/zipalign -f -p 4 app/build/outputs/apk/release/app-release-unsigned.apk release-build/BibleDaily-1.0.0-unsigned.apk
+          $BT/zipalign -c -p 4 release-build/BibleDaily-1.0.0-unsigned.apk
+          cp app/build/outputs/bundle/release/app-release.aab release-build/BibleDaily-1.0.0-unsigned.aab
+          $BT/aapt2 dump badging release-build/BibleDaily-1.0.0-unsigned.apk | grep -E "package:|SdkVersion|uses-permission"
+          $BT/aapt2 dump xmltree --file AndroidManifest.xml release-build/BibleDaily-1.0.0-unsigned.apk | grep -A1 "APPLICATION_ID" | tail -1
+          ls -la release-build
+      - name: Publish unsigned store builds to the release-build branch
+        if: github.ref == 'refs/heads/main'
+        run: |
+          set -e
+          cd release-build
+          git init -q -b release-build
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          echo "Unsigned store builds for ${GITHUB_SHA}. Sign them with the private upload key (see README)." > README.md
+          git add -A && git commit -qm "Unsigned store builds for ${GITHUB_SHA}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" release-build
       - name: Show APK details
         run: |
           ls -la app/build/outputs/apk/debug app/build/outputs/apk/androidTest/debug

@@ -1,0 +1,68 @@
+name: Verify signed store builds
+
+# Runs when signed store builds are pushed to the signed-release branch. It only VERIFIES the files:
+# no signing key is ever stored in this repository or in GitHub. The emulator stays in airplane
+# mode the whole time so the release build never requests real AdMob ads from a test device.
+on:
+  push:
+    branches: [signed-release]
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      # The signed-release branch is main plus a signed/ folder holding the signed AAB and APK.
+      - uses: actions/checkout@v4
+      - name: List signed builds
+        run: ls -la signed
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Verify signatures and bundle
+        run: |
+          set -e
+          BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
+          APK=$(ls signed/*.apk); AAB=$(ls signed/*.aab)
+          echo "== apksigner verify (APK)"
+          $BT/apksigner verify --verbose --print-certs --min-sdk-version 26 "$APK"
+          $BT/zipalign -c -p 4 "$APK" && echo "zipalign: OK"
+          $BT/aapt2 dump badging "$APK" | grep -E "package:|SdkVersion|application-label:"
+          echo "== jarsigner verify (AAB)"
+          jarsigner -verify -verbose:summary -certs "$AAB" | tail -8
+          jarsigner -verify "$AAB" | grep -q "jar verified" && echo "AAB signature: OK"
+          echo "== bundletool validate (AAB)"
+          URL=$(curl -sSL https://api.github.com/repos/google/bundletool/releases/latest | jq -r '.assets[] | select(.name|endswith(".jar")) | .browser_download_url' | head -1)
+          echo "bundletool: $URL"; curl -sSL -o bundletool.jar "$URL"
+          java -jar bundletool.jar validate --bundle="$AAB" | head -20
+          java -jar bundletool.jar dump manifest --bundle="$AAB" | grep -E "package=|versionCode|versionName|targetSdkVersion|minSdkVersion|APPLICATION_ID" -A0 | head
+          java -jar bundletool.jar dump manifest --bundle="$AAB" --xpath "/manifest/application/meta-data[@android:name='com.google.android.gms.ads.APPLICATION_ID']/@android:value"
+          java -jar bundletool.jar dump manifest --bundle="$AAB" --xpath "/manifest/@android:versionCode"
+          java -jar bundletool.jar dump manifest --bundle="$AAB" --xpath "/manifest/uses-sdk/@android:targetSdkVersion"
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Install signed APK and AAB on an Android 16 emulator (offline) and launch
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
+          script: bash scripts/verify-release-on-device.sh signed verify-output
+      - name: Publish verification output
+        if: always()
+        run: |
+          [ -d verify-output ] || exit 0
+          cp -r verify-output /tmp/vo && cd /tmp/vo
+          git init -q -b release-verify
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A && git commit -qm "Release verification for ${GITHUB_SHA}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" release-verify
