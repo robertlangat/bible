@@ -1,0 +1,116 @@
+name: Android build, test and release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build APK and run unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build debug APK, test APK and run unit tests
+        run: ./gradlew --no-daemon --stacktrace assembleDebug assembleDebugAndroidTest testDebugUnitTest
+      - name: Show APK details
+        run: |
+          ls -la app/build/outputs/apk/debug app/build/outputs/apk/androidTest/debug
+          BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
+          $BT/aapt2 dump badging app/build/outputs/apk/debug/app-debug.apk | grep -E "package:|sdkVersion|targetSdkVersion|uses-permission|application-label:"
+          $BT/apksigner verify --print-certs app/build/outputs/apk/debug/app-debug.apk | head -3
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unit-test-reports
+          path: app/build/reports/tests/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apks
+          path: |
+            app/build/outputs/apk/debug/app-debug.apk
+            app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+
+  device-tests:
+    name: Emulator tests (airplane mode, restart)
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: apks
+          path: apks
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Run device tests on Android 14 emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
+          script: bash scripts/device-tests.sh apks/debug/app-debug.apk apks/androidTest/debug/app-debug-androidTest.apk device-test-output
+      - name: Publish test output to the ci-artifacts branch
+        if: always()
+        run: |
+          set -e
+          [ -d device-test-output ] || exit 0
+          cp -r device-test-output /tmp/out
+          cd /tmp/out
+          git init -q -b ci-artifacts
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          echo "Device test output for ${GITHUB_SHA} (run ${GITHUB_RUN_ID})" > README.md
+          git add -A && git commit -qm "Device test output for ${GITHUB_SHA}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" ci-artifacts
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: device-test-output
+          path: device-test-output
+
+  release:
+    name: Publish v0.1.0-test pre-release
+    needs: [build, device-tests]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: apks
+          path: apks
+      - name: Create or update the pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          TAG=v0.1.0-test
+          cp apks/debug/app-debug.apk BibleDaily-v0.1.0-test.apk
+          sha256sum BibleDaily-v0.1.0-test.apk | tee BibleDaily-v0.1.0-test.apk.sha256
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" BibleDaily-v0.1.0-test.apk BibleDaily-v0.1.0-test.apk.sha256 --clobber
+            git push -f origin "HEAD:refs/tags/$TAG"
+          else
+            gh release create "$TAG" BibleDaily-v0.1.0-test.apk BibleDaily-v0.1.0-test.apk.sha256 \
+              --target "$GITHUB_SHA" --prerelease --title "Bible Daily v0.1.0-test" --notes-file .github/release-notes.md
+          fi
