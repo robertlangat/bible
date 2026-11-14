@@ -1,0 +1,3 @@
+--------- beginning of main
+11-14 13:32:57.803  3726  4142 I BibleDailyTest: Shared text: For God so loved the world, that he gave his one and only Son, that whoever believes in him should not perish, but have eternal life.
+11-14 13:32:57.803  3726  4142 I BibleDailyTest: — John 3:16 (World English Bible, WEB)

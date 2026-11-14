@@ -1,0 +1,8 @@
+
+com.robertlangat.bibledaily.CoreFlowsTest:......
+
+Time: 40.191
+
+OK (6 tests)
+
+

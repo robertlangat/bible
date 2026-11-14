@@ -1,0 +1,8 @@
+
+com.robertlangat.bibledaily.RestartPersistenceTest:.
+
+Time: 4.036
+
+OK (1 test)
+
+
