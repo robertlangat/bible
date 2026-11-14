@@ -1,0 +1,36 @@
+Android version: 14
+API level: 34
+== Enabling airplane mode
+airplane_mode_on=1
+Active default network: none
+== Fresh install
+Performing Streamed Install
+Success
+Performing Streamed Install
+Success
+    requested permissions:
+      android.permission.INTERNET
+      android.permission.ACCESS_NETWORK_STATE
+      android.permission.POST_NOTIFICATIONS
+      android.permission.RECEIVE_BOOT_COMPLETED
+      com.google.android.gms.permission.AD_ID
+      android.permission.ACCESS_ADSERVICES_AD_ID
+== phase1-core-flows (com.robertlangat.bibledaily.CoreFlowsTest)
+phase1-core-flows: PASSED OK (6 tests)
+11-14 13:36:03.861  4181  4307 I BibleDailyTest: Shared text: For God so loved the world, that he gave his one and only Son, that whoever believes in him should not perish, but have eternal life.
+== Restarting app (force-stop kills the process)
+process stopped
+== phase2-after-restart (com.robertlangat.bibledaily.RestartPersistenceTest)
+phase2-after-restart: PASSED OK (1 test)
+airplane_mode_on at end=1
+01_home_first_launch_offline.png
+02_reader_genesis_1.png
+03_search_john_3_16_opened.png
+04_search_jn_3_16.png
+05_search_phrase.png
+06_verse_actions.png
+07_reader_marked_verse.png
+08_saved_notes.png
+09_settings_dark.png
+10_after_restart_saved.png
+11_after_restart_reader.png
